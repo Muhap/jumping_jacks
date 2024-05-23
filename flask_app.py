@@ -1,26 +1,32 @@
 from flask import Flask, request, jsonify
-from model import process_sequence
+
 import numpy as np
 
 app = Flask(__name__)
 
+SEQUENCE_LENGTH = 30
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json
-    sequence = data['sequence']
-    sequence = np.array(sequence)
+    keypoints = data['keypoints']
+    keypoints = np.array(keypoints)
 
-    if sequence.shape != (30, 132):
-        return jsonify({'error': 'Invalid sequence shape, expected (30, 132)'}), 400
+    if keypoints.shape != (132,):
+        return jsonify({'error': 'Invalid keypoints shape, expected (132,)'}), 400
+        
+    global sequence_buffer  # Access the global sequence buffer variable
+    # Append keypoints to the sequence buffer
+    sequence_buffer.append(keypoints)
+    if len(sequence_buffer) > SEQUENCE_LENGTH:
+        sequence_buffer=sequence_buffer[-30:]  # Maintain the buffer size
 
-    action = process_sequence(sequence)
+    action = None
+    if len(sequence_buffer) == SEQUENCE_LENGTH:
+        action = process_sequence(sequence_buffer)
+        #sequence_buffer.clear()  # Reset the buffer
 
-    if action:
-        return jsonify({'action': action})
-    else:
-        return jsonify({'action': 'No action detected'})
-
+    return jsonify({'action': action if action else 'Buffering'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
