@@ -19,7 +19,7 @@ def create_model():
     return model
 
 model = create_model()
-model.load_weights(r"C:\Graduation project\jumping\models\weights1\jumpingjacks.h5")
+model.load_weights('jumpingjacks.h5')
 
 sequence_buffer = []
 
